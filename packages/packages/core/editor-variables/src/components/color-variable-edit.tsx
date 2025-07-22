@@ -14,6 +14,7 @@ import { ERROR_MESSAGES, mapServerError } from '../utils/validations';
 import { ColorField } from './fields/color-field';
 import { LabelField, useLabelError } from './fields/label-field';
 import { DeleteConfirmationDialog } from './ui/delete-confirmation-dialog';
+import { EditConfirmationDialog, useEditConfirmationDialog } from './ui/edit-confirmation-dialog';
 
 const SIZE = 'tiny';
 
@@ -28,6 +29,12 @@ export const ColorVariableEdit = ( { onClose, onGoBack, onSubmit, editId }: Prop
 	const { setValue: notifyBoundPropChange, value: assignedValue } = useBoundProp( colorVariablePropTypeUtil );
 	const [ deleteConfirmation, setDeleteConfirmation ] = useState( false );
 	const [ errorMessage, setErrorMessage ] = useState( '' );
+
+	const {
+		isMessageSuppressed,
+		showDialog: showEditConfirmationDialog,
+		setShowDialog: setShowEditConfirmationDialog
+	} = useEditConfirmationDialog();
 
 	const { labelFieldError, setLabelFieldError } = useLabelError();
 
@@ -63,6 +70,14 @@ export const ColorVariableEdit = ( { onClose, onGoBack, onSubmit, editId }: Prop
 
 				setErrorMessage( ERROR_MESSAGES.UNEXPECTED_ERROR );
 			} );
+	};
+
+	const handleUpdateWithConfirmation = () => {
+		if ( isMessageSuppressed ) {
+			handleUpdate();
+		} else {
+			setShowEditConfirmationDialog( true );
+		}
 	};
 
 	const handleDelete = () => {
@@ -161,11 +176,18 @@ export const ColorVariableEdit = ( { onClose, onGoBack, onSubmit, editId }: Prop
 				</PopoverContent>
 
 				<CardActions sx={ { pt: 0.5, pb: 1 } }>
-					<Button size="small" variant="contained" disabled={ isSubmitDisabled } onClick={ handleUpdate }>
+					<Button size="small" variant="contained" disabled={ isSubmitDisabled } onClick={ handleUpdateWithConfirmation }>
 						{ __( 'Save', 'elementor' ) }
 					</Button>
 				</CardActions>
 			</PopoverBody>
+
+			{ showEditConfirmationDialog && (
+				<EditConfirmationDialog
+					onConfirm={ handleUpdate }
+					closeDialog={ () => setShowEditConfirmationDialog( false ) }
+				/>
+			) }
 
 			{ deleteConfirmation && (
 				<DeleteConfirmationDialog
