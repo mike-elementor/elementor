@@ -16,7 +16,7 @@ class Presets {
 	const TRIGGERS = [ 'load', 'scrollIn', 'scrollOut' ];
 	const EFFECTS = [ 'fade', 'slide', 'scale' ];
 	const TYPES = [ 'in', 'out' ];
-	const DIRECTIONS = [ 'left', 'right', 'top', 'bottom' ];
+	const DIRECTIONS = [ 'left', 'right', 'top', 'bottom', 'topleft', 'topright', 'bottomleft', 'bottomright' ];
 	const DURATIONS = [ 0, 100, 200, 300, 400, 500, 750, 1000, 1250, 1500 ];
 	const DELAYS = [ 0, 100, 200, 300, 400, 500, 750, 1000, 1250, 1500 ];
 
@@ -40,6 +40,18 @@ class Presets {
 				'load' => __( 'On page load', 'elementor' ),
 				'scrollIn' => __( 'Scroll into view', 'elementor' ),
 				'scrollOut' => __( 'Scroll out of view', 'elementor' ),
+			],
+
+			'direction' => [
+				'top' => __( 'From bottom', 'elementor' ),
+				'bottom' => __( 'From top', 'elementor' ),
+				'left' => __( 'From right', 'elementor' ),
+				'right' => __( 'From left', 'elementor' ),
+
+				'topleft' => __( 'From bottom/right', 'elementor' ),
+				'topright' => __( 'From bottom/left', 'elementor' ),
+				'bottomleft' => __( 'From top/right', 'elementor' ),
+				'bottomright' => __( 'From top/left', 'elementor' ),
 			],
 		];
 

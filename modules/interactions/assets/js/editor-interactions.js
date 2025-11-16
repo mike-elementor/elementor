@@ -24,10 +24,28 @@
 		if ( direction ) {
 			const distance = config.slideDistance;
 			const movement = {
-				left: { x: isIn ? [ -distance, 0 ] : [ 0, -distance ] },
-				right: { x: isIn ? [ distance, 0 ] : [ 0, distance ] },
-				top: { y: isIn ? [ -distance, 0 ] : [ 0, -distance ] },
-				bottom: { y: isIn ? [ distance, 0 ] : [ 0, distance ] },
+				top: { y: isIn ? [ distance, 0 ] : [ 0, distance ] },
+				bottom: { y: isIn ? [ -distance, 0 ] : [ 0, -distance ] },
+				left: { x: isIn ? [ distance, 0 ] : [ 0, distance ] },
+				right: { x: isIn ? [ -distance, 0 ] : [ 0, -distance ] },
+
+				topleft: {
+					x: isIn ? [ distance, 0 ] : [ 0, distance ],
+					y: isIn ? [ distance, 0 ] : [ 0, distance ],
+				},
+				topright: {
+					x: isIn ? [ -distance, 0 ] : [ 0, -distance ],
+					y: isIn ? [ distance, 0 ] : [ 0, distance ],
+				},
+
+				bottomleft: {
+					x: isIn ? [ distance, 0 ] : [ 0, distance ],
+					y: isIn ? [ -distance, 0 ] : [ 0, -distance ],
+				},
+				bottomright: {
+					x: isIn ? [ -distance, 0 ] : [ 0, -distance ],
+					y: isIn ? [ -distance, 0 ] : [ 0, -distance ],
+				},
 			};
 
 			Object.assign( keyframes, movement[ direction ] );

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Divider, Grid } from '@elementor/ui';
 import { __ } from '@wordpress/i18n';
 
@@ -42,6 +42,16 @@ export const InteractionDetails = ( { interaction, onChange }: InteractionDetail
 		setInteractionDetails( ( prev ) => ( { ...prev, [ key ]: value } ) );
 	};
 
+	const handleDirectionChange = useCallback( ( v: string ) => {
+		setInteractionDetails( ( prev ) => {
+			const result = { ...prev, direction: v };
+
+			console.log( 'result', result );
+
+			return result;
+		} );
+	}, [ setInteractionDetails ] );
+
 	return (
 		<>
 			<Grid container spacing={ 2 } sx={ { p: 1.5 } }>
@@ -53,7 +63,7 @@ export const InteractionDetails = ( { interaction, onChange }: InteractionDetail
 				<EffectType value={ interactionDetails.type } onChange={ ( v ) => handleChange( 'type', v ) } />
 				<Direction
 					value={ interactionDetails.direction ?? '' }
-					onChange={ ( v ) => handleChange( 'direction', v ) }
+					onChange={ handleDirectionChange }
 				/>
 				<TimeFrameIndicator
 					value={ interactionDetails.duration }
