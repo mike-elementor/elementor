@@ -34,6 +34,7 @@ type VariableTypeOptions = {
 	variableType: string;
 	key?: string;
 	defaultValue?: string;
+	styleTransformer?: ( value?: string ) => string | null;
 	fallbackPropTypeUtil: FallbackPropTypeUtil;
 	propTypeUtil: PropTypeUtil< string, string >;
 	selectionFilter?: ( variables: NormalizedVariable[], propType: PropType ) => NormalizedVariable[];
@@ -57,6 +58,7 @@ export function createVariableTypeRegistry() {
 		defaultValue,
 		selectionFilter,
 		valueTransformer,
+		styleTransformer,
 		fallbackPropTypeUtil,
 		isCompatible,
 		emptyState,
@@ -88,12 +90,16 @@ export function createVariableTypeRegistry() {
 			emptyState,
 		};
 
-		registerTransformer( propTypeUtil.key );
+		if ( 'function' !== typeof styleTransformer) {
+			styleTransformer = ( styleTransformer );
+		}
+
+		registerTransformer( propTypeUtil.key, styleTransformer );
 		registerInheritanceTransformer( propTypeUtil.key );
 	};
 
-	const registerTransformer = ( key: PropTypeKey ) => {
-		styleTransformersRegistry.register( key, variableTransformer );
+	const registerTransformer = ( key: PropTypeKey, transformer: any ) => {
+		styleTransformersRegistry.register( key, transformer ?? variableTransformer );
 	};
 
 	const registerInheritanceTransformer = ( key: PropTypeKey ) => {

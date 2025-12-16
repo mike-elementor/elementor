@@ -33,13 +33,23 @@ export function registerVariableTypes() {
 		defaultValue: 'Roboto',
 	} );
 
-	registerVariableType( {
-		key: sizeVariablePropTypeUtil.key,
+	const sizePromitions = {
 		icon: ExpandDiagonalIcon,
 		propTypeUtil: sizeVariablePropTypeUtil,
 		fallbackPropTypeUtil: sizePropTypeUtil,
+		styleTransformer: () => null,
 		variableType: 'size',
 		selectionFilter: () => [],
 		emptyState: <UpgradeButton size="small" href={ 'https://go.elementor.com/go-pro-panel-size-variable/' } />,
+	};
+
+	registerVariableType( {
+		...sizePromitions,
+		key: sizeVariablePropTypeUtil.key,
+	} );
+
+	registerVariableType( {
+		...sizePromitions,
+		key: 'global-custom-size-variable',
 	} );
 }
