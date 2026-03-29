@@ -15,8 +15,11 @@ class Timing_Config_Prop_Type extends Object_Prop_Type {
 
 	protected function define_shape(): array {
 		return [
-			'duration' => Time_Size_Prop_Type::make()->description( 'The duration to use for the animation' ),
-			'delay' => Time_Size_Prop_Type::make()->description( 'The delay to use for the animation' ),
+			'duration' => Time_Size_Prop_Type::make()
+				->description( 'The duration to use for the animation' ),
+
+			'delay' => Time_Size_Prop_Type::make()
+				->description( 'The delay to use for the animation' ),
 		];
 	}
 }

@@ -15,7 +15,8 @@ class Interaction_Breakpoints_Prop_Type extends Object_Prop_Type {
 
 	protected function define_shape(): array {
 		return [
-			'excluded' => Excluded_Breakpoints_Prop_Type::make()->description( 'The excluded breakpoints' ),
+			'excluded' => Excluded_Breakpoints_Prop_Type::make()
+				->description( 'The excluded breakpoints' ),
 		];
 	}
 }
