@@ -48,10 +48,18 @@ class Module extends BaseModule {
 			return;
 		}
 
-		$registry->register_managed_widget_type( 'image-carousel' );
+		$registry->register_managed_widget_type( 'accordion' );
 		$registry->register_managed_widget_type( 'counter' );
-		$registry->register_managed_widget_type( 'nested-tabs' );
+		$registry->register_managed_widget_type( 'google_maps' );
+		$registry->register_managed_widget_type( 'image-carousel' );
+		$registry->register_managed_widget_type( 'image-gallery' );
 		$registry->register_managed_widget_type( 'nested-accordion' );
+		$registry->register_managed_widget_type( 'nested-tabs' );
+		$registry->register_managed_widget_type( 'rating' );
+		$registry->register_managed_widget_type( 'tabs' );
+		$registry->register_managed_widget_type( 'testimonial' );
+		$registry->register_managed_widget_type( 'toggle' );
+		$registry->register_managed_widget_type( 'video' );
 	}
 
 	public function on_preview_init( Preview $preview ): void {
