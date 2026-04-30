@@ -49,6 +49,9 @@ class Module extends BaseModule {
 		}
 
 		$registry->register_managed_widget_type( 'image-carousel' );
+		$registry->register_managed_widget_type( 'counter' );
+		$registry->register_managed_widget_type( 'nested-tabs' );
+		$registry->register_managed_widget_type( 'nested-accordion' );
 	}
 
 	public function on_preview_init( Preview $preview ): void {
