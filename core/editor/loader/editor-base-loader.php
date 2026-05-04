@@ -186,12 +186,7 @@ abstract class Editor_Base_Loader implements Editor_Loader_Interface {
 				'imagesloaded',
 				'heartbeat',
 				'jquery-elementor-select2',
-				'flatpickr',
-				'ace',
-				'ace-language-tools',
 				'jquery-hover-intent',
-				'nouislider',
-				'pickr',
 				'react',
 				'react-dom',
 			],
@@ -271,8 +266,6 @@ abstract class Editor_Base_Loader implements Editor_Loader_Interface {
 				'elementor-icons',
 				'wp-auth-check',
 				'google-font-roboto',
-				'flatpickr',
-				'pickr',
 			],
 			ELEMENTOR_VERSION
 		);

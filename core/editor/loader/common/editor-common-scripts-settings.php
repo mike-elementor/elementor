@@ -126,6 +126,7 @@ class Editor_Common_Scripts_Settings {
 				),
 			],
 			'fontVariableRanges' => Group_Control_Typography::get_font_variable_ranges(),
+			'lazy_control_assets' => static::get_lazy_control_assets(),
 		];
 
 		if ( Plugin::$instance->experiments->is_feature_active( 'container' ) ) {
@@ -225,6 +226,80 @@ class Editor_Common_Scripts_Settings {
 	 * @since 1.9.0
 	 * @access private
 	 */
+	private static function get_lazy_control_assets(): array {
+		global $wp_scripts, $wp_styles;
+
+		if ( ! ( $wp_scripts instanceof \WP_Scripts ) || ! ( $wp_styles instanceof \WP_Styles ) ) {
+			return [];
+		}
+
+		$script_urls = function ( array $handles ) use ( $wp_scripts ): array {
+			$urls = [];
+			foreach ( $handles as $handle ) {
+				$url = static::get_registered_dependency_src( $wp_scripts, $handle );
+				if ( $url ) {
+					$urls[] = $url;
+				}
+			}
+			return $urls;
+		};
+
+		$style_urls = function ( array $handles ) use ( $wp_styles ): array {
+			$urls = [];
+			foreach ( $handles as $handle ) {
+				$url = static::get_registered_dependency_src( $wp_styles, $handle );
+				if ( $url ) {
+					$urls[] = $url;
+				}
+			}
+			return $urls;
+		};
+
+		return [
+			'flatpickr' => [
+				'scripts' => $script_urls( [ 'flatpickr' ] ),
+				'styles' => $style_urls( [ 'flatpickr' ] ),
+			],
+			'nouislider' => [
+				'scripts' => $script_urls( [ 'nouislider' ] ),
+				'styles' => [],
+			],
+			'pickr' => [
+				'scripts' => $script_urls( [ 'pickr' ] ),
+				'styles' => $style_urls( [ 'pickr' ] ),
+			],
+			'ace' => [
+				'scripts' => $script_urls( [ 'ace', 'ace-language-tools' ] ),
+				'styles' => [],
+			],
+		];
+	}
+
+	private static function get_registered_dependency_src( \WP_Dependencies $dependencies, string $handle ): string {
+		if ( ! isset( $dependencies->registered[ $handle ] ) ) {
+			return '';
+		}
+
+		/** @var \_WP_Dependency $obj */
+		$obj = $dependencies->registered[ $handle ];
+
+		if ( empty( $obj->src ) ) {
+			return '';
+		}
+
+		$src = $obj->src;
+
+		if ( ! preg_match( '#^(https?:)?//#i', $src ) ) {
+			$src = $dependencies->base_url . $src;
+		}
+
+		if ( ! empty( $obj->ver ) ) {
+			$src = add_query_arg( 'ver', $obj->ver, $src );
+		}
+
+		return $src;
+	}
+
 	private static function get_wp_editor_config() {
 		// Remove all TinyMCE plugins.
 		remove_all_filters( 'mce_buttons', 10 );

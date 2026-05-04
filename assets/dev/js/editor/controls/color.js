@@ -1,5 +1,6 @@
 import { default as ControlBaseDataView } from './base-data';
 import ColorPicker from '../utils/color-picker';
+import { ensurePickrLoaded } from 'elementor-editor-utils/load-lazy-control-assets';
 
 export default class extends ControlBaseDataView {
 	ui() {
@@ -14,6 +15,10 @@ export default class extends ControlBaseDataView {
 		// Gets the current OR default value of the control.
 		const currentValue = this.getCurrentValue();
 
+		const applyNoValueClass = () => {
+			this.$el.toggleClass( 'e-control-color--no-value', ! currentValue );
+		};
+
 		if ( this.colorPicker ) {
 			// When there is a global set on the control but there is no value/it doesn't exist, don't show a value.
 			if ( currentValue ) {
@@ -24,45 +29,48 @@ export default class extends ControlBaseDataView {
 			} else {
 				this.colorPicker.picker._clearColor( true );
 			}
-		} else {
-			this.initPicker();
+
+			applyNoValueClass();
+			return;
 		}
 
-		this.$el.toggleClass( 'e-control-color--no-value', ! currentValue );
+		return this.initPicker().then( () => applyNoValueClass() );
 	}
 
 	initPicker() {
-		const options = {
-			picker: {
-				el: this.ui.pickerContainer[ 0 ],
-				default: this.getCurrentValue(),
-				components: {
-					opacity: this.model.get( 'alpha' ),
+		return ensurePickrLoaded().then( () => {
+			const options = {
+				picker: {
+					el: this.ui.pickerContainer[ 0 ],
+					default: this.getCurrentValue(),
+					components: {
+						opacity: this.model.get( 'alpha' ),
+					},
+					defaultRepresentation: 'HEX',
 				},
-				defaultRepresentation: 'HEX',
-			},
-			// Don't create the add button in the Global Settings color pickers.
-			addButton: this.model.get( 'global' )?.active,
-			onChange: () => this.onPickerChange(),
-			onClear: () => this.onPickerClear(),
-			onAddButtonClick: () => this.onAddGlobalButtonClick(),
-			onPickerShow: () => this.reRoute( true ),
-			onPickerHide: () => this.reRoute( false ),
-		};
+				// Don't create the add button in the Global Settings color pickers.
+				addButton: this.model.get( 'global' )?.active,
+				onChange: () => this.onPickerChange(),
+				onClear: () => this.onPickerClear(),
+				onAddButtonClick: () => this.onAddGlobalButtonClick(),
+				onPickerShow: () => this.reRoute( true ),
+				onPickerHide: () => this.reRoute( false ),
+			};
 
-		this.colorPicker = new ColorPicker( options );
+			this.colorPicker = new ColorPicker( options );
 
-		this.hidePickerOnPreviewClick();
+			this.hidePickerOnPreviewClick();
 
-		this.$pickerButton = jQuery( this.colorPicker.picker.getRoot().button );
+			this.$pickerButton = jQuery( this.colorPicker.picker.getRoot().button );
 
-		this.addTipsyToPickerButton();
+			this.addTipsyToPickerButton();
 
-		this.addEyedropper();
+			this.addEyedropper();
 
-		this.$pickerButton.on( 'click', () => this.onPickerButtonClick() );
+			this.$pickerButton.on( 'click', () => this.onPickerButtonClick() );
 
-		jQuery( this.colorPicker.picker.getRoot().root ).addClass( 'elementor-control-unit-1 elementor-control-tag-area' );
+			jQuery( this.colorPicker.picker.getRoot().root ).addClass( 'elementor-control-unit-1 elementor-control-tag-area' );
+		} );
 	}
 
 	hidePickerOnPreviewClick() {

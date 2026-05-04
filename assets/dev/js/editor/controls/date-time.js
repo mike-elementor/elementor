@@ -1,3 +1,5 @@
+import { ensureFlatpickrLoaded } from 'elementor-editor-utils/load-lazy-control-assets';
+
 const ControlBaseDataView = require( 'elementor-controls/base-data' );
 
 export default class extends ControlBaseDataView {
@@ -7,7 +9,9 @@ export default class extends ControlBaseDataView {
 			minuteIncrement: 1,
 		}, this.model.get( 'picker_options' ) );
 
-		this.ui.input.flatpickr( options );
+		ensureFlatpickrLoaded().then( () => {
+			this.ui.input.flatpickr( options );
+		} );
 	}
 
 	onBaseInputChange() {
@@ -36,6 +40,8 @@ export default class extends ControlBaseDataView {
 	}
 
 	onBeforeDestroy() {
-		this.ui.input.flatpickr().destroy();
+		if ( this.ui.input[ 0 ]?._flatpickr ) {
+			this.ui.input.flatpickr().destroy();
+		}
 	}
 }
