@@ -3,10 +3,17 @@
 namespace Elementor\Tests\Phpunit\Elementor\Modules\DynamicAssetsManager;
 
 use Elementor\Core\Experiments\Manager as Experiments_Manager;
+use Elementor\Modules\DynamicAssetsManager\Asset_Intent;
+use Elementor\Modules\DynamicAssetsManager\Asset_Type;
+use Elementor\Modules\DynamicAssetsManager\Context;
+use Elementor\Modules\DynamicAssetsManager\Defer_Trigger;
 use Elementor\Modules\DynamicAssetsManager\Module;
 use Elementor\Plugin;
 use ElementorEditorTesting\Elementor_Test_Base;
 
+/**
+ * @group dynamic-assets-manager
+ */
 class Test_Module extends Elementor_Test_Base {
 	public function test_experiment_metadata_uses_expected_slug() {
 		$data = Module::get_experimental_data();
@@ -26,6 +33,10 @@ class Test_Module extends Elementor_Test_Base {
 
 		$this->assertFalse( has_action( 'elementor/editor/before_enqueue_scripts', [ $module, 'before_enqueue_scripts_editor' ] ) );
 		$this->assertFalse( has_action( 'elementor/editor/after_enqueue_scripts', [ $module, 'after_enqueue_scripts_editor' ] ) );
+		$this->assertFalse( has_action( 'elementor/editor/before_enqueue_styles', [ $module, 'before_enqueue_styles_editor' ] ) );
+		$this->assertFalse( has_action( 'elementor/editor/after_enqueue_styles', [ $module, 'after_enqueue_styles_editor' ] ) );
+		$this->assertFalse( has_action( 'elementor/preview/enqueue_styles', [ $module, 'before_enqueue_scripts_editor_canvas' ] ) );
+		$this->assertFalse( has_action( 'elementor/preview/enqueue_styles', [ $module, 'after_enqueue_scripts_editor_canvas' ] ) );
 		$this->assertFalse( has_action( 'elementor/preview/enqueue_scripts', [ $module, 'before_enqueue_scripts_editor_canvas' ] ) );
 		$this->assertFalse( has_action( 'elementor/preview/enqueue_scripts', [ $module, 'after_enqueue_scripts_editor_canvas' ] ) );
 	}
@@ -58,5 +69,103 @@ class Test_Module extends Elementor_Test_Base {
 
 		$this->assertEquals( $scripts_queue_before, $scripts_queue_after );
 		$this->assertEquals( $styles_queue_before, $styles_queue_after );
+	}
+
+	public function test_bootstrap_action_receives_registry_instance_when_feature_is_active() {
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_ACTIVE
+		);
+
+		new Module();
+
+		$received_registry = null;
+		$listener = function( $registry ) use ( &$received_registry ) {
+			$received_registry = $registry;
+		};
+
+		add_action( Module::REGISTER_ASSETS_HOOK, $listener, 10, 2 );
+		$participant_keys_filter = static function() {
+			return [];
+		};
+
+		add_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10, 3 );
+
+		do_action( 'elementor/editor/before_enqueue_scripts' );
+
+		remove_action( Module::REGISTER_ASSETS_HOOK, $listener, 10 );
+		remove_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10 );
+
+		$this->assertInstanceOf( 'Elementor\Modules\DynamicAssetsManager\Registry', $received_registry );
+	}
+
+	public function test_deferred_handles_are_pruned_from_queue_when_feature_is_active() {
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_ACTIVE
+		);
+
+		new Module();
+
+		wp_register_script( 'e_lazy_test_script', 'https://example.com/deferred.js', [], null, true );
+		wp_register_style( 'e_lazy_test_style', 'https://example.com/deferred.css', [], null );
+
+		wp_enqueue_script( 'e_lazy_test_script' );
+		wp_enqueue_style( 'e_lazy_test_style' );
+
+		$register_assets = static function( $registry, $context ) {
+			if ( Context::EDITOR !== $context ) {
+				return;
+			}
+
+			$registry->register(
+				'test-widget',
+				[
+					'handle' => 'e_lazy_test_script',
+					'type' => Asset_Type::SCRIPT,
+					'uri' => 'https://example.com/deferred.js',
+					'deps' => [],
+					'intent' => Asset_Intent::ENQUEUE_DEFER,
+					'deferTrigger' => Defer_Trigger::DOCUMENT_READY,
+					'context' => Context::EDITOR,
+				]
+			);
+
+			$registry->register(
+				'test-widget',
+				[
+					'handle' => 'e_lazy_test_style',
+					'type' => Asset_Type::STYLE,
+					'uri' => 'https://example.com/deferred.css',
+					'deps' => [],
+					'intent' => Asset_Intent::ENQUEUE_DEFER,
+					'deferTrigger' => Defer_Trigger::WIDGET_INSERT,
+					'context' => Context::EDITOR,
+				]
+			);
+		};
+
+		add_action( Module::REGISTER_ASSETS_HOOK, $register_assets, 10, 2 );
+
+		$participant_keys_filter = static function( $keys, $context ) {
+			if ( Context::EDITOR !== $context ) {
+				return [];
+			}
+
+			return [ 'test-widget' ];
+		};
+
+		add_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10, 3 );
+
+		do_action( 'elementor/editor/before_enqueue_scripts' );
+		do_action( 'elementor/editor/after_enqueue_scripts' );
+		do_action( 'elementor/editor/before_enqueue_styles' );
+		do_action( 'elementor/editor/after_enqueue_styles' );
+
+		remove_action( Module::REGISTER_ASSETS_HOOK, $register_assets, 10 );
+		remove_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10 );
+
+		$this->assertFalse( in_array( 'e_lazy_test_script', wp_scripts()->queue, true ) );
+		$this->assertFalse( in_array( 'e_lazy_test_style', wp_styles()->queue, true ) );
 	}
 }
