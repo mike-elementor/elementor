@@ -78,6 +78,8 @@ class Modules_Manager {
 	 */
 	public function get_modules_names() {
 		return [
+			'dynamic-assets-manager',
+
 			'admin-bar',
 			'history',
 			'library',
@@ -139,7 +141,6 @@ class Modules_Manager {
 			'widget-creation',
 			'editor-one',
 			'markdown-render',
-			'dynamic-assets-manager',
 			'elementor-capabilities-mcp',
 		];
 	}
