@@ -139,6 +139,7 @@ class Modules_Manager {
 			'widget-creation',
 			'editor-one',
 			'markdown-render',
+			'dynamic-assets-manager',
 			'elementor-capabilities-mcp',
 		];
 	}
