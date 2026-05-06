@@ -53,6 +53,8 @@ class Module extends BaseModule {
 	private function register_hooks() {
 		$this->participant_keys_provider = new Participant_Keys_Provider( new Document_Parser() );
 
+		add_action( self::REGISTER_ASSETS_HOOK, [ new Widget_Asset_Registrar(), 'register' ], 10, 2 );
+
 		add_filter( self::PARTICIPANT_KEYS_FILTER, [ $this, 'provide_participant_keys_from_document' ], 10, 2 );
 
 		add_action( 'elementor/editor/before_enqueue_scripts', [ $this, 'before_enqueue_scripts_editor' ], self::PRIORITY_FIRST );
