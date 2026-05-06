@@ -21,6 +21,8 @@ class Module extends BaseModule {
 
 	private $resolved_context_data = [];
 
+	private $participant_keys_provider;
+
 	public function get_name() {
 		return 'dynamic-assets-manager';
 	}
@@ -47,6 +49,10 @@ class Module extends BaseModule {
 	}
 
 	private function register_hooks() {
+		$this->participant_keys_provider = new Participant_Keys_Provider( new Document_Parser() );
+
+		add_filter( self::PARTICIPANT_KEYS_FILTER, [ $this, 'provide_participant_keys_from_document' ], 10, 2 );
+
 		add_action( 'elementor/editor/before_enqueue_scripts', [ $this, 'before_enqueue_scripts_editor' ], self::PRIORITY_FIRST );
 		add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'after_enqueue_scripts_editor' ], self::PRIORITY_LAST );
 		add_action( 'elementor/editor/before_enqueue_styles', [ $this, 'before_enqueue_styles_editor' ], self::PRIORITY_FIRST );
@@ -146,6 +152,10 @@ class Module extends BaseModule {
 				$this->remove_handle_from_dependencies_queue( wp_styles(), $handle );
 			}
 		}
+	}
+
+	public function provide_participant_keys_from_document( array $keys, $context ) {
+		return $this->participant_keys_provider->provide( $keys, $context );
 	}
 
 	private function remove_handle_from_dependencies_queue( \WP_Dependencies $dependencies, $handle ) {
