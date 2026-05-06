@@ -11,6 +11,8 @@ use Elementor\Modules\DynamicAssetsManager\Module;
 use Elementor\Plugin;
 use ElementorEditorTesting\Elementor_Test_Base;
 
+const REQUIRED_CLIENT_PAYLOAD_FIELDS = [ 'uri', 'type', 'deps', 'intent', 'deferTrigger' ];
+
 /**
  * @group dynamic-assets-manager
  */
@@ -167,5 +169,130 @@ class Test_Module extends Elementor_Test_Base {
 
 		$this->assertFalse( in_array( 'e_lazy_test_script', wp_scripts()->queue, true ) );
 		$this->assertFalse( in_array( 'e_lazy_test_style', wp_styles()->queue, true ) );
+	}
+
+	public function test_client_payload_entries_contain_all_required_fields_when_feature_is_active() {
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_ACTIVE
+		);
+
+		new Module();
+
+		wp_register_script( 'e_lazy_field_check', 'https://example.com/field-check.js', [], null, true );
+
+		$received_payload = null;
+		add_action(
+			Module::PAYLOAD_READY_ACTION,
+			static function( $payload ) use ( &$received_payload ) {
+				$received_payload = $payload;
+			}
+		);
+
+		$register_assets = static function( $registry, $context ) {
+			if ( Context::EDITOR !== $context ) {
+				return;
+			}
+
+			$registry->register(
+				'field-check-widget',
+				[
+					'handle'       => 'e_lazy_field_check',
+					'type'         => Asset_Type::SCRIPT,
+					'uri'          => 'https://example.com/field-check.js',
+					'deps'         => [],
+					'intent'       => Asset_Intent::ENQUEUE_DEFER,
+					'deferTrigger' => Defer_Trigger::DOCUMENT_READY,
+					'context'      => Context::EDITOR,
+				]
+			);
+		};
+
+		add_action( Module::REGISTER_ASSETS_HOOK, $register_assets, 10, 2 );
+
+		$keys_filter = static function( $keys, $context ) {
+			return Context::EDITOR === $context ? [ 'field-check-widget' ] : [];
+		};
+
+		add_filter( Module::PARTICIPANT_KEYS_FILTER, $keys_filter, 10, 3 );
+
+		do_action( 'elementor/editor/before_enqueue_scripts' );
+
+		remove_action( Module::REGISTER_ASSETS_HOOK, $register_assets, 10 );
+		remove_filter( Module::PARTICIPANT_KEYS_FILTER, $keys_filter, 10 );
+
+		$this->assertNotNull( $received_payload );
+		$this->assertArrayHasKey( 'e_lazy_field_check', $received_payload );
+
+		$entry = $received_payload['e_lazy_field_check'];
+
+		foreach ( REQUIRED_CLIENT_PAYLOAD_FIELDS as $field ) {
+			$this->assertArrayHasKey( $field, $entry, "Client payload entry is missing required field: $field" );
+		}
+	}
+
+	public function test_loader_script_is_enqueued_with_payload_config_when_feature_is_active() {
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_ACTIVE
+		);
+
+		new Module();
+
+		wp_register_script( 'e_lazy_loader_script', 'https://example.com/loader.js', [], null, true );
+
+		$register_assets = static function( $registry, $context ) {
+			if ( Context::EDITOR !== $context ) {
+				return;
+			}
+
+			$registry->register(
+				'loader-widget',
+				[
+					'handle'       => 'e_lazy_loader_script',
+					'type'         => Asset_Type::SCRIPT,
+					'uri'          => 'https://example.com/loader.js',
+					'deps'         => [],
+					'intent'       => Asset_Intent::ENQUEUE_DEFER,
+					'deferTrigger' => Defer_Trigger::DOCUMENT_READY,
+					'context'      => Context::EDITOR,
+				]
+			);
+		};
+
+		add_action( Module::REGISTER_ASSETS_HOOK, $register_assets, 10, 2 );
+
+		$keys_filter = static function( $keys, $context ) {
+			return Context::EDITOR === $context ? [ 'loader-widget' ] : [];
+		};
+
+		add_filter( Module::PARTICIPANT_KEYS_FILTER, $keys_filter, 10, 3 );
+
+		do_action( 'elementor/editor/before_enqueue_scripts' );
+		do_action( 'elementor/editor/after_enqueue_scripts' );
+
+		remove_action( Module::REGISTER_ASSETS_HOOK, $register_assets, 10 );
+		remove_filter( Module::PARTICIPANT_KEYS_FILTER, $keys_filter, 10 );
+
+		$this->assertTrue( wp_script_is( Module::LOADER_SCRIPT_HANDLE, 'enqueued' ) );
+
+		$inline_scripts = wp_scripts()->get_data( Module::LOADER_SCRIPT_HANDLE, 'data' );
+		$this->assertNotEmpty( $inline_scripts );
+		$this->assertStringContainsString( 'elementorDynamicAssets', $inline_scripts );
+		$this->assertStringContainsString( 'e_lazy_loader_script', $inline_scripts );
+	}
+
+	public function test_loader_script_is_not_enqueued_when_feature_is_inactive() {
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_INACTIVE
+		);
+
+		new Module();
+
+		do_action( 'elementor/editor/before_enqueue_scripts' );
+		do_action( 'elementor/editor/after_enqueue_scripts' );
+
+		$this->assertFalse( wp_script_is( Module::LOADER_SCRIPT_HANDLE, 'enqueued' ) );
 	}
 }

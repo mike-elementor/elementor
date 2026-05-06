@@ -4,6 +4,7 @@ namespace Elementor\Modules\DynamicAssetsManager;
 use Elementor\Core\Base\Module as BaseModule;
 use Elementor\Core\Experiments\Manager as Experiments_Manager;
 use Elementor\Plugin;
+use Elementor\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -14,6 +15,7 @@ class Module extends BaseModule {
 	const REGISTER_ASSETS_HOOK = 'elementor/dynamic_assets_manager/register_assets';
 	const PARTICIPANT_KEYS_FILTER = 'elementor/dynamic_assets_manager/participant_keys';
 	const PAYLOAD_READY_ACTION = 'elementor/dynamic_assets_manager/client_payload_ready';
+	const LOADER_SCRIPT_HANDLE = 'e-dynamic-assets-loader';
 
 	private const PRIORITY_FIRST = 0;
 
@@ -134,6 +136,26 @@ class Module extends BaseModule {
 
 		$this->prune_deferred_handles( Asset_Type::SCRIPT, $this->resolved_context_data[ $context ]['deferred_by_type'] );
 		$this->prune_deferred_handles( Asset_Type::STYLE, $this->resolved_context_data[ $context ]['deferred_by_type'] );
+
+		if ( Context::EDITOR === $context ) {
+			$this->enqueue_client_script( $this->resolved_context_data[ $context ]['client_payload'] );
+		}
+	}
+
+	private function enqueue_client_script( array $client_payload ) {
+		$min_suffix = Utils::is_script_debug() ? '' : '.min';
+
+		wp_register_script(
+			self::LOADER_SCRIPT_HANDLE,
+			ELEMENTOR_ASSETS_URL . "js/dynamic-assets-loader{$min_suffix}.js",
+			[ 'elementor-editor' ],
+			ELEMENTOR_VERSION,
+			true
+		);
+
+		wp_enqueue_script( self::LOADER_SCRIPT_HANDLE );
+
+		Utils::print_js_config( self::LOADER_SCRIPT_HANDLE, 'elementorDynamicAssets', $client_payload );
 	}
 
 	private function prune_deferred_handles( $asset_type, array $deferred_by_type ) {
