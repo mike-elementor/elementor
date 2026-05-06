@@ -16,6 +16,7 @@ class Module extends BaseModule {
 	const PARTICIPANT_KEYS_FILTER = 'elementor/dynamic_assets_manager/participant_keys';
 	const PAYLOAD_READY_ACTION = 'elementor/dynamic_assets_manager/client_payload_ready';
 	const LOADER_SCRIPT_HANDLE = 'e-dynamic-assets-loader';
+	const SHOULD_ENQUEUE_WIDGET_SCRIPTS_FILTER = 'elementor/widgets/should_enqueue_scripts';
 
 	private const PRIORITY_FIRST = 0;
 
@@ -115,6 +116,10 @@ class Module extends BaseModule {
 
 		$this->resolved_context_data[ $context ] = $assets_manager->build( $participant_keys, $context );
 
+		if ( Context::EDITOR_CANVAS === $context ) {
+			$this->register_canvas_widget_script_filter( $participant_keys );
+		}
+
 		do_action(
 			self::PAYLOAD_READY_ACTION,
 			$this->resolved_context_data[ $context ]['client_payload'],
@@ -176,6 +181,17 @@ class Module extends BaseModule {
 				$this->remove_handle_from_dependencies_queue( wp_styles(), $handle );
 			}
 		}
+	}
+
+	private function register_canvas_widget_script_filter( array $participant_keys ): void {
+		add_filter(
+			self::SHOULD_ENQUEUE_WIDGET_SCRIPTS_FILTER,
+			static function( bool $should, $widget ) use ( $participant_keys ) {
+				return in_array( $widget->get_name(), $participant_keys, true );
+			},
+			10,
+			2
+		);
 	}
 
 	public function provide_participant_keys_from_document( array $keys, $context ) {

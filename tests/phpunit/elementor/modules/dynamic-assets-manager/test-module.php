@@ -282,6 +282,66 @@ class Test_Module extends Elementor_Test_Base {
 		$this->assertStringContainsString( 'e_lazy_loader_script', $inline_scripts );
 	}
 
+	public function test_canvas_widget_script_filter_allows_participant_widgets() {
+		// Arrange
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_ACTIVE
+		);
+
+		new Module();
+
+		$participant_keys_filter = static function( $keys, $context ) {
+			return Context::EDITOR_CANVAS === $context ? [ 'carousel-widget' ] : [];
+		};
+
+		add_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10, 3 );
+
+		// Act — before_enqueue_scripts_editor_canvas fires and registers the filter
+		do_action( 'elementor/preview/enqueue_styles' );
+
+		remove_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10 );
+
+		$participant = new class {
+			public function get_name(): string {
+				return 'carousel-widget';
+			}
+		};
+
+		// Assert
+		$this->assertTrue( apply_filters( Module::SHOULD_ENQUEUE_WIDGET_SCRIPTS_FILTER, true, $participant ) );
+	}
+
+	public function test_canvas_widget_script_filter_blocks_non_participant_widgets() {
+		// Arrange
+		Plugin::$instance->experiments->set_feature_default_state(
+			Module::EXPERIMENT_NAME,
+			Experiments_Manager::STATE_ACTIVE
+		);
+
+		new Module();
+
+		$participant_keys_filter = static function( $keys, $context ) {
+			return Context::EDITOR_CANVAS === $context ? [ 'carousel-widget' ] : [];
+		};
+
+		add_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10, 3 );
+
+		// Act — before_enqueue_scripts_editor_canvas fires and registers the filter
+		do_action( 'elementor/preview/enqueue_styles' );
+
+		remove_filter( Module::PARTICIPANT_KEYS_FILTER, $participant_keys_filter, 10 );
+
+		$non_participant = new class {
+			public function get_name(): string {
+				return 'some-other-widget';
+			}
+		};
+
+		// Assert
+		$this->assertFalse( apply_filters( Module::SHOULD_ENQUEUE_WIDGET_SCRIPTS_FILTER, true, $non_participant ) );
+	}
+
 	public function test_loader_script_is_not_enqueued_when_feature_is_inactive() {
 		Plugin::$instance->experiments->set_feature_default_state(
 			Module::EXPERIMENT_NAME,
