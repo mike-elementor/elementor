@@ -658,6 +658,10 @@ class Widgets_Manager {
 	 */
 	public function enqueue_widgets_scripts() {
 		foreach ( $this->get_widget_types() as $widget ) {
+			if ( ! apply_filters( 'elementor/widgets/should_enqueue_scripts', true, $widget ) ) {
+				continue;
+			}
+
 			$widget->enqueue_scripts();
 		}
 	}
