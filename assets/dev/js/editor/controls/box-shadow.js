@@ -2,6 +2,7 @@ var ControlMultipleBaseItemView = require( 'elementor-controls/base-multiple' ),
 	ControlBoxShadowItemView;
 
 import ColorPicker from '../utils/color-picker';
+import { ensureNouisliderLoaded, ensurePickrLoaded } from 'elementor-editor-utils/load-lazy-control-assets';
 
 ControlBoxShadowItemView = ControlMultipleBaseItemView.extend( {
 	ui() {
@@ -65,8 +66,13 @@ ControlBoxShadowItemView = ControlMultipleBaseItemView.extend( {
 	},
 
 	onReady() {
-		this.initSliders();
-		this.initColors();
+		Promise.all( [
+			ensureNouisliderLoaded(),
+			ensurePickrLoaded(),
+		] ).then( () => {
+			this.initSliders();
+			this.initColors();
+		} );
 	},
 
 	onBeforeDestroy() {

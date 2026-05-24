@@ -1,4 +1,5 @@
 import ColorPicker from './color-picker';
+import { ensurePickrLoaded } from './load-lazy-control-assets';
 import DocumentHelper from 'elementor-editor/document/helper-bc';
 import ContainerHelper from 'elementor-editor-utils/container-helper';
 import DOMPurify, { isValidAttribute } from 'dompurify';
@@ -530,8 +531,10 @@ module.exports = {
 	 * @param {*} $element
 	 * @deprecated since 2.8.0, use `new ColorPicker( { picker: { el: $element } } )` instead.
 	 */
-	wpColorPicker( $element ) {
+	async wpColorPicker( $element ) {
 		elementorDevTools.deprecation.deprecated( 'elementor.helpers.wpColorPicker( $element )', '2.8.0', 'new ColorPicker( { picker: { el: $element } } )' );
+
+		await ensurePickrLoaded();
 
 		return new ColorPicker( { picker: { el: $element } } );
 	},

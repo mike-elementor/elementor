@@ -2,6 +2,7 @@ var ControlBaseUnitsItemView = require( 'elementor-controls/base-units' ),
 	ControlSliderItemView;
 
 import { convertSizeToFrString } from 'elementor-editor-utils/helpers';
+import { ensureNouisliderLoaded } from 'elementor-editor-utils/load-lazy-control-assets';
 
 ControlSliderItemView = ControlBaseUnitsItemView.extend( {
 	ui() {
@@ -27,8 +28,13 @@ ControlSliderItemView = ControlBaseUnitsItemView.extend( {
 	},
 
 	initSlider() {
-		// Slider does not exist in tests.
-		if ( ! this.ui.slider[ 0 ] ) {
+		return ensureNouisliderLoaded().then( () => this.initSliderAfterLibReady() );
+	},
+
+	initSliderAfterLibReady() {
+		const sliderEl = this.ui.slider?.[ 0 ];
+
+		if ( ! sliderEl ) {
 			return;
 		}
 
@@ -69,7 +75,7 @@ ControlSliderItemView = ControlBaseUnitsItemView.extend( {
 			} ) );
 		}
 
-		const sliderInstance = noUiSlider.create( this.ui.slider[ 0 ], {
+		const sliderInstance = noUiSlider.create( sliderEl, {
 			start: sizes,
 			range: unitRange,
 			step,
@@ -93,7 +99,9 @@ ControlSliderItemView = ControlBaseUnitsItemView.extend( {
 	},
 
 	isSliderInitialized() {
-		return ( this.ui.slider[ 0 ] && this.ui.slider[ 0 ].noUiSlider );
+		const sliderEl = this.ui.slider?.[ 0 ];
+
+		return Boolean( sliderEl?.noUiSlider );
 	},
 
 	getSize() {
@@ -116,9 +124,11 @@ ControlSliderItemView = ControlBaseUnitsItemView.extend( {
 	},
 
 	destroySlider() {
-		// Slider does not exist in tests.
-		if ( this.ui.slider[ 0 ] && this.ui.slider[ 0 ].noUiSlider ) {
-			this.ui.slider[ 0 ].noUiSlider.destroy();
+		const sliderEl = this.ui.slider?.[ 0 ],
+			sliderApi = sliderEl?.noUiSlider;
+
+		if ( sliderApi ) {
+			sliderApi.destroy();
 		}
 	},
 
